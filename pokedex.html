@@ -1,0 +1,1917 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pokédex</title>
+<meta name="theme-color" content="#ee2c4d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --paper: #eef1fb;
+    --paper-2: #e2e6f6;
+    --surface: #ffffff;
+    --ink: #1b1740;
+    --ink-2: #4a4770;
+    --muted: #66638c;
+    --line: #dce0f2;
+    --shell: #ee2c4d;
+    --shell-dark: #b80f35;
+    --ball: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='white' stroke-width='6'%3E%3Ccircle cx='50' cy='50' r='44'/%3E%3Cpath d='M6 50h28M66 50h28'/%3E%3Ccircle cx='50' cy='50' r='15'/%3E%3C/g%3E%3C/svg%3E");
+    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231b1740' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    --font: "Bricolage Grotesque", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  body.locked { overflow: hidden; }
+
+  button, input, select { font-family: inherit; }
+  :focus-visible { outline: 3px solid #6c4cff; outline-offset: 3px; }
+
+  /* ---------- Carcaça (topo) ---------- */
+  .shell {
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+    padding: 22px 20px 34px;
+    border-radius: 0 0 36px 36px;
+    background: linear-gradient(180deg, #ff4f68 0%, var(--shell) 52%, #d2143c 100%);
+    box-shadow: 0 20px 32px -20px rgba(210, 20, 60, 0.7);
+  }
+  .shell::after {
+    content: "";
+    position: absolute;
+    right: -70px;
+    top: -80px;
+    width: 280px;
+    height: 280px;
+    background: var(--ball) center / contain no-repeat;
+    opacity: 0.13;
+    pointer-events: none;
+  }
+  .shell-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "brand lang" "search search";
+    align-items: center;
+    gap: 16px;
+  }
+  .brand { grid-area: brand; display: flex; align-items: center; gap: 14px; }
+  .lang { grid-area: lang; }
+  .search { grid-area: search; }
+
+  .lens {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    background: radial-gradient(circle at 33% 28%, #f2fdff 0 8%, #86e0ff 22%, #2fb4ff 52%, #0a5fb0 100%);
+    box-shadow: 0 0 0 3px rgba(80, 0, 20, 0.18), 0 8px 18px rgba(80, 0, 20, 0.35), inset 0 -7px 12px rgba(5, 40, 110, 0.45);
+    animation: lens-on 1.2s ease-out both;
+  }
+  @keyframes lens-on {
+    0%   { filter: brightness(0.5) saturate(0.5); }
+    55%  { filter: brightness(1.45) saturate(1.2); }
+    100% { filter: none; }
+  }
+  .brand-text { display: flex; flex-direction: column; gap: 5px; }
+  .leds { display: flex; gap: 6px; }
+  .leds i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(80, 0, 20, 0.35);
+    animation: led-on 0.5s ease-out both;
+  }
+  .leds i:nth-child(1) { background: #ff9a9a; animation-delay: 0.35s; }
+  .leds i:nth-child(2) { background: #ffe27a; animation-delay: 0.55s; }
+  .leds i:nth-child(3) { background: #62e58d; animation-delay: 0.75s; }
+  @keyframes led-on { from { background-color: rgba(80, 0, 20, 0.35); } }
+  .wordmark { font-size: 2rem; font-weight: 800; letter-spacing: -0.035em; line-height: 1; }
+
+  .search { position: relative; }
+  .search svg {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 19px;
+    height: 19px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .search input {
+    width: 100%;
+    padding: 15px 20px 15px 48px;
+    font-size: 1rem;
+    color: var(--ink);
+    background: #fff;
+    border: 0;
+    border-radius: 999px;
+    box-shadow: 0 10px 22px -12px rgba(80, 0, 20, 0.7);
+  }
+  .search input::placeholder { color: var(--muted); }
+  .search input:focus-visible { outline: 3px solid #ffe27a; outline-offset: 2px; }
+
+  .lang {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: rgba(80, 0, 20, 0.28);
+  }
+  .lang button {
+    border: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 8px 13px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .lang button:hover { background: rgba(255, 255, 255, 0.16); }
+  .lang button.active { background: #fff; color: var(--shell-dark); }
+  .lang button:focus-visible { outline-color: #ffe27a; outline-offset: 1px; }
+
+  @media (min-width: 760px) {
+    .shell { padding: 26px 28px 40px; }
+    .shell-inner {
+      grid-template-columns: auto 1fr auto;
+      grid-template-areas: "brand search lang";
+      gap: 28px;
+    }
+    .wordmark { font-size: 2.3rem; }
+    .lens { width: 62px; height: 62px; }
+  }
+
+  /* ---------- Barra de filtros ---------- */
+  .toolbar { position: relative; z-index: 10; padding: 18px 20px 4px; }
+  .toolbar-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .selects { display: flex; gap: 10px; }
+  .selects select {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 38px 11px 16px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--ink);
+    background: #fff var(--chevron) no-repeat right 14px center / 16px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+  }
+  .selects select:disabled { opacity: 0.55; cursor: default; }
+
+  .filters {
+    display: flex;
+    gap: 8px;
+    min-width: 0;
+    overflow-x: auto;
+    padding: 4px 34px 6px 2px;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 34px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 34px), transparent);
+  }
+  .filters::-webkit-scrollbar { display: none; }
+
+  .chip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px 8px 12px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .chip[data-type=""] { padding-left: 15px; }
+  .chip:hover { transform: translateY(-1px); box-shadow: 0 6px 12px -8px rgba(27, 23, 64, 0.5); }
+  .chip .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .chip.active { border-color: transparent; }
+  .chip.active .dot { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.75); }
+  .chip.all.active { background: var(--ink); color: #fff; }
+
+  @media (min-width: 760px) {
+    .toolbar {
+      position: sticky;
+      top: 0;
+      padding: 14px 28px 10px;
+      background: rgba(238, 241, 251, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 10px 20px -18px rgba(27, 23, 64, 0.55);
+    }
+    .toolbar-inner { flex-direction: row; align-items: center; gap: 16px; }
+    .selects { flex-shrink: 0; }
+    .selects select { flex: none; width: 210px; }
+    .filters { flex: 1; }
+  }
+
+  /* ---------- Conteúdo ---------- */
+  main { max-width: 1100px; margin: 0 auto; padding: 18px 20px 70px; }
+  @media (min-width: 760px) { main { padding: 22px 28px 80px; } }
+
+  .status { color: var(--muted); font-size: 0.92rem; font-weight: 500; margin-bottom: 16px; min-height: 1.3em; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(206px, 1fr));
+    gap: 18px;
+  }
+
+  /* ---------- Cards ---------- */
+  .card {
+    --c: #8e9aaf;
+    --on: #fff;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 272px;
+    padding: 16px;
+    text-align: left;
+    font: inherit;
+    color: var(--on);
+    border: 0;
+    border-radius: 26px;
+    cursor: pointer;
+    background: var(--c);
+    background:
+      radial-gradient(120% 80% at 88% -8%, color-mix(in srgb, var(--c) 60%, #fff) 0, transparent 62%),
+      linear-gradient(165deg, var(--c) 0%, color-mix(in srgb, var(--c) 74%, #000) 100%);
+    box-shadow: 0 18px 24px -18px rgba(27, 23, 64, 0.6);
+    box-shadow: 0 18px 26px -18px color-mix(in srgb, var(--c) 90%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+    animation: fade 0.35s ease both;
+  }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  .card::after {
+    content: "";
+    position: absolute;
+    right: -34px;
+    top: 30px;
+    width: 176px;
+    height: 176px;
+    background: var(--ball) center / contain no-repeat;
+    opacity: 0.2;
+    transition: transform 0.6s ease;
+    pointer-events: none;
+  }
+  .card:hover, .card:focus-visible { transform: translateY(-5px); }
+  .card:hover::after { transform: rotate(35deg); }
+  .card:focus-visible { outline-color: var(--ink); }
+
+  .card > * { position: relative; z-index: 1; }
+
+  .number {
+    font-size: 0.9rem;
+    font-weight: 700;
+    opacity: 0.78;
+    font-variant-numeric: tabular-nums;
+  }
+  .card img {
+    align-self: center;
+    width: 140px;
+    height: 140px;
+    object-fit: contain;
+    margin: 0 0 6px;
+    filter: drop-shadow(0 12px 12px rgba(20, 10, 50, 0.38));
+    transition: transform 0.28s ease;
+  }
+  .card:hover img { transform: scale(1.07) translateY(-2px); }
+  .card h2 {
+    margin-top: auto;
+    margin-bottom: 10px;
+    font-size: 1.28rem;
+    font-weight: 750;
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+    text-transform: capitalize;
+    overflow-wrap: anywhere;
+  }
+
+  .types { display: flex; gap: 6px; flex-wrap: wrap; }
+  .type {
+    padding: 5px 13px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 650;
+  }
+  .card .type {
+    color: var(--on);
+    background: rgba(255, 255, 255, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.38);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  /* Skeleton */
+  .skeleton {
+    min-height: 272px;
+    border-radius: 26px;
+    background: linear-gradient(100deg, #e3e7f7 30%, #f3f5fd 50%, #e3e7f7 70%);
+    background-size: 200% 100%;
+    animation: shimmer 1.3s linear infinite;
+  }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  .message { grid-column: 1 / -1; text-align: center; padding: 56px 20px; color: var(--muted); }
+  .message strong { display: block; color: var(--ink); font-size: 1.25rem; font-weight: 750; margin-bottom: 8px; }
+  .btn {
+    margin-top: 16px;
+    padding: 11px 24px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(180deg, #ff4f68, var(--shell-dark));
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 10px 18px -12px rgba(184, 15, 53, 0.9);
+  }
+  .btn:hover { filter: brightness(1.08); }
+
+  #sentinel { height: 70px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.92rem; }
+  .spinner {
+    width: 22px;
+    height: 22px;
+    border: 3px solid var(--line);
+    border-top-color: var(--shell);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- Modal ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(20, 14, 52, 0.62);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .overlay.open { display: flex; animation: fade 0.2s ease; }
+
+  .modal {
+    --c: #8e9aaf;
+    --on: #fff;
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    max-height: 93vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    color: var(--ink);
+    background: var(--surface);
+    border-radius: 32px;
+    box-shadow: 0 40px 90px -20px rgba(10, 5, 40, 0.75);
+    animation: pop 0.3s ease;
+  }
+  @keyframes pop { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+  /* Animação ao trocar de Pokémon */
+  .mc.from-right { animation: inRight 0.3s ease; }
+  .mc.from-left  { animation: inLeft 0.3s ease; }
+  @keyframes inRight { from { opacity: 0; transform: translateX(48px); }  to { opacity: 1; transform: none; } }
+  @keyframes inLeft  { from { opacity: 0; transform: translateX(-48px); } to { opacity: 1; transform: none; } }
+
+  .modal-hero {
+    position: relative;
+    padding: 34px 20px 100px;
+    text-align: center;
+    color: var(--on);
+    background: var(--c);
+    background:
+      radial-gradient(110% 80% at 85% -10%, color-mix(in srgb, var(--c) 58%, #fff) 0, transparent 62%),
+      linear-gradient(165deg, var(--c) 0%, color-mix(in srgb, var(--c) 72%, #000) 100%);
+  }
+  .modal-hero::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 320px;
+    height: 320px;
+    transform: translate(-50%, -54%);
+    background: var(--ball) center / contain no-repeat;
+    opacity: 0.17;
+    pointer-events: none;
+  }
+  .modal-hero img {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 214px;
+    height: 214px;
+    margin: 0 auto;
+    object-fit: contain;
+    filter: drop-shadow(0 16px 16px rgba(20, 10, 50, 0.42));
+  }
+  .modal-num {
+    position: absolute;
+    top: 22px;
+    left: 22px;
+    z-index: 2;
+    font-weight: 700;
+    font-size: 1rem;
+    opacity: 0.8;
+    font-variant-numeric: tabular-nums;
+  }
+  .modal-close, .nav-btn {
+    position: absolute;
+    z-index: 2;
+    width: 40px;
+    height: 40px;
+    font-size: 1.35rem;
+    line-height: 1;
+    color: var(--on);
+    background: rgba(255, 255, 255, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .modal-close:hover, .nav-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.4); }
+  .modal-close { top: 14px; right: 14px; }
+  .nav-btn { top: 46%; transform: translateY(-50%); font-size: 1.8rem; padding-bottom: 3px; }
+  .nav-btn.prev { left: 12px; }
+  .nav-btn.next { right: 12px; }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .modal-close:focus-visible, .nav-btn:focus-visible, .shiny-btn:focus-visible { outline-color: var(--on); outline-offset: 2px; }
+
+  /* Botão shiny: só o emoji */
+  .shiny-btn {
+    position: absolute;
+    z-index: 3;
+    bottom: 52px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    font-size: 1.4rem;
+    line-height: 1;
+    background: rgba(255, 255, 255, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+  .shiny-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.45); }
+  .shiny-btn.on {
+    border-color: transparent;
+    background: linear-gradient(135deg, #fff1a6, #ffb3e6);
+    box-shadow: 0 0 22px rgba(255, 236, 140, 0.85);
+  }
+  .shiny-btn:disabled { opacity: 0.35; cursor: default; }
+
+  .modal-body {
+    position: relative;
+    z-index: 2;
+    margin-top: -38px;
+    padding: 24px 22px 28px;
+    background: var(--surface);
+    border-radius: 32px 32px 0 0;
+  }
+  .modal-body h2 {
+    text-align: center;
+    font-size: 2.1rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    text-transform: capitalize;
+    margin-bottom: 12px;
+    overflow-wrap: anywhere;
+  }
+  .modal-body .types { justify-content: center; margin-bottom: 20px; }
+
+  .modal-body h3 {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 1rem;
+    font-weight: 750;
+    color: var(--ink);
+    margin: 6px 0 12px;
+  }
+  .modal-body h3::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--c);
+  }
+
+  .ph { color: var(--muted); font-size: 0.92rem; text-align: center; padding: 10px 0; }
+
+  /* Descrição */
+  .desc { font-size: 1rem; line-height: 1.6; color: var(--ink-2); }
+  .desc-src { font-size: 0.78rem; color: var(--muted); margin: 8px 0 12px; }
+  .block { margin-bottom: 22px; }
+
+  details.fold {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    margin-bottom: 18px;
+  }
+  details.fold > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 13px 16px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 18px;
+  }
+  details.fold > summary::-webkit-details-marker { display: none; }
+  details.fold > summary::after {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-right: 2.5px solid var(--muted);
+    border-bottom: 2.5px solid var(--muted);
+    transform: rotate(-45deg);
+    transition: transform 0.2s;
+  }
+  details.fold[open] > summary::after { transform: rotate(45deg); }
+  .fold-body { padding: 2px 16px 14px; }
+  .entry { padding: 11px 0; border-top: 1px solid var(--line); }
+  .entry p { font-size: 0.9rem; line-height: 1.55; color: var(--ink-2); }
+  .entry small { display: block; margin-top: 5px; color: var(--muted); font-size: 0.76rem; }
+
+  /* Fatos */
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 22px; }
+  .fact {
+    background: var(--paper);
+    border-radius: 18px;
+    padding: 12px 6px;
+    text-align: center;
+  }
+  .fact span { display: block; font-size: 0.8rem; font-weight: 500; color: var(--muted); margin-bottom: 3px; }
+  .fact b { font-size: 1.15rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+
+  .abilities { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .ability {
+    padding: 7px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    background: var(--paper);
+    border-radius: 999px;
+  }
+  .ability small { color: var(--muted); font-weight: 500; }
+
+  /* Evolução */
+  .evo-tree { display: flex; justify-content: center; margin-bottom: 8px; }
+  .evo-stage { display: flex; flex-direction: column; align-items: center; }
+  .evo-kids { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-top: 8px; }
+  .evo-kid { display: flex; flex-direction: column; align-items: center; max-width: 170px; }
+  .evo-cond {
+    font-size: 0.78rem;
+    line-height: 1.35;
+    font-weight: 500;
+    text-align: center;
+    color: var(--ink-2);
+    background: var(--paper);
+    border-radius: 12px;
+    padding: 6px 10px;
+  }
+  .evo-arrow { color: var(--muted); font-size: 1.1rem; line-height: 1.2; margin: 2px 0; }
+  .evo-mon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    width: 100px;
+    padding: 7px 4px;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 18px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .evo-mon:hover { background: var(--paper); }
+  .evo-mon.current {
+    background: var(--paper);
+    border-color: var(--c);
+    background: color-mix(in srgb, var(--c) 14%, #fff);
+    border-color: color-mix(in srgb, var(--c) 55%, transparent);
+  }
+  .evo-mon img { width: 76px; height: 76px; object-fit: contain; filter: drop-shadow(0 5px 6px rgba(27, 23, 64, 0.25)); }
+  .evo-mon span { font-size: 0.82rem; font-weight: 650; text-transform: capitalize; }
+
+  /* Estatísticas */
+  .stats-block { margin-bottom: 22px; }
+  .stat { display: grid; grid-template-columns: 96px 38px 1fr; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.88rem; }
+  .stat span { color: var(--muted); font-weight: 500; }
+  .stat b { text-align: right; font-weight: 750; font-variant-numeric: tabular-nums; }
+  .bar { height: 9px; background: var(--paper-2); border-radius: 999px; overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 999px; width: 0; transition: width 0.6s cubic-bezier(.2,.8,.2,1); }
+
+  /* Curiosidades */
+  .curio {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+    font-size: 0.88rem;
+  }
+  .curio:first-child { border-top: 0; }
+  .curio span { color: var(--muted); font-weight: 500; flex-shrink: 0; }
+  .curio b { text-align: right; font-weight: 650; }
+  .mu { padding: 10px 0; border-top: 1px solid var(--line); }
+  .mu > span { display: block; font-size: 0.82rem; font-weight: 500; color: var(--muted); margin-bottom: 7px; }
+  .mu .types { justify-content: flex-start; margin-bottom: 0; }
+  .src-note { margin-top: 10px; font-size: 0.76rem; color: var(--muted); }
+
+  .hint { text-align: center; font-size: 0.78rem; color: var(--muted); margin-top: 8px; }
+
+  @media (max-width: 480px) {
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .card { min-height: 236px; padding: 13px; border-radius: 22px; }
+    .card img { width: 108px; height: 108px; }
+    .card h2 { font-size: 1.08rem; }
+    .card .type, .type { font-size: 0.74rem; padding: 4px 10px; }
+    .card::after { width: 140px; height: 140px; right: -30px; top: 26px; }
+    .skeleton { min-height: 236px; border-radius: 22px; }
+    .stat { grid-template-columns: 82px 34px 1fr; }
+    .modal-body h2 { font-size: 1.8rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="shell">
+  <div class="shell-inner">
+    <div class="brand">
+      <span class="lens" aria-hidden="true"></span>
+      <div class="brand-text">
+        <span class="leds" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="wordmark">Pokédex</span>
+      </div>
+    </div>
+    <label class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="search" type="search" autocomplete="off">
+    </label>
+    <div class="lang" id="lang" role="group" aria-label="Idioma / Language / Idioma">
+      <button type="button" data-lang="pt">PT</button>
+      <button type="button" data-lang="en">EN</button>
+      <button type="button" data-lang="es">ES</button>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <div class="selects">
+      <select id="region"></select>
+      <select id="game"></select>
+    </div>
+    <div class="filters" id="filters"></div>
+  </div>
+</div>
+
+<main>
+  <p class="status" id="status"></p>
+  <div class="grid" id="grid"></div>
+  <div id="sentinel"></div>
+</main>
+
+<div class="overlay" id="overlay" aria-hidden="true">
+  <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+</div>
+
+<script>
+  const API = "https://pokeapi.co/api/v2";
+  const SPR = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon";
+  const PAGE_SIZE = 24;
+  const MAX_ID = 10000; // ignora formas alternativas (ids 10001+)
+
+  /* =====================================================================
+     Idiomas
+     ===================================================================== */
+  const I18N = {
+    pt: {
+      search: "Buscar por nome ou número…",
+      regionAll: "Região: todas", gameAll: "Jogo: todos", gen: "Geração",
+      loadingDex: "Carregando Pokédex…", filtering: "Filtrando…",
+      filterError: "Erro ao aplicar o filtro. Tente de novo.",
+      found: n => `${n} Pokémon encontrado${n > 1 ? "s" : ""}`,
+      zero: "0 resultados",
+      noneTitle: "Nenhum Pokémon encontrado", noneText: "Tente outro nome, número ou filtro.",
+      loadErrTitle: "Não foi possível carregar a Pokédex", loadErrText: "Verifique sua conexão e tente novamente.",
+      retry: "Tentar de novo", loadingMore: "Carregando…", end: "Fim da lista 🎉", moreErr: "Erro ao carregar.",
+      close: "Fechar", prev: "Pokémon anterior", next: "Próximo Pokémon", shiny: "Alternar versão shiny",
+      height: "Altura", weight: "Peso", exp: "Exp. base",
+      secEvo: "Evolução", secAbilities: "Habilidades", secStats: "Estatísticas base",
+      total: "Total", hidden: "oculta", curiosities: "Curiosidades",
+      hint: "Deslize para os lados (ou use ← →) para trocar de Pokémon",
+      loadingDesc: "Carregando descrição…", loadingEvo: "Carregando evolução…", loadingCur: "Carregando…",
+      failDesc: "Não foi possível carregar a descrição.", failEvo: "Não foi possível carregar a evolução.",
+      failCur: "Não foi possível carregar as curiosidades.",
+      noEvo: "Este Pokémon não possui evolução nem pré-evolução.", noEvoData: "Sem dados de evolução.",
+      noDesc: "Sem descrição disponível.",
+      translating: "Traduzindo…",
+      trFail: "Não foi possível traduzir agora; exibindo o texto oficial em inglês.",
+      descPt: g => `Tradução automática do texto oficial em inglês · Pokémon ${g}`,
+      descNative: g => `Texto oficial da Pokédex · Pokémon ${g}`,
+      descEsFallback: g => `Texto oficial em inglês · Pokémon ${g}`,
+      autoNote: "Tradução automática dos textos oficiais em inglês.",
+      allEntries: n => `Todas as entradas da Pokédex (${n})`,
+      // curiosidades
+      rCategory: "Categoria", rGeneration: "Geração de estreia", rStatus: "Classificação", rHabitat: "Habitat",
+      rColor: "Cor (Pokédex)", rEgg: "Grupos de ovo", rGender: "Proporção de gênero", rCapture: "Taxa de captura",
+      rHappiness: "Amizade base", rGrowth: "Velocidade de crescimento", rHatch: "Ciclos de ovo",
+      rEvolvesFrom: "Evolui de", rForms: "Formas alternativas", rHeld: "Itens segurados (selvagem)",
+      rMoves: "Golpes que pode aprender",
+      capture: n => `${n} (de 255)`, genderless: "Sem gênero",
+      genderFmt: (m, f) => `${m}% macho · ${f}% fêmea`,
+      sBaby: "Pokémon bebê", sLegendary: "Lendário", sMythical: "Mítico",
+      weakTitle: "Fraquezas e resistências (tabela de tipos atual)",
+      mu4: "Muito fraco (×4)", mu2: "Fraco (×2)", mu05: "Resiste (×½)", mu025: "Resiste muito (×¼)", mu0: "Imune (×0)",
+      srcNote: "Dados oficiais dos jogos, obtidos pela PokeAPI.",
+      // evolução
+      or: " ou ", special: "Condição especial", levelUp: "Subir de nível", level: n => `Nível ${n}`,
+      trade: "Troca", tradeFor: s => `Troca por ${s}`, useItem: s => `Usar ${s}`, useItemGeneric: "Usar item",
+      shed: "Com espaço na equipe e uma Poké Bola", spin: "Girar",
+      crits: "Acertar 3 golpes críticos em uma batalha", bisharp: "Derrotar 3 Bisharp líderes",
+      damage: n => `Sofrer pelo menos ${n} de dano`, damageAny: "Sofrer dano",
+      recoil: n => `Sofrer ${n} de dano de recuo`, recoilAny: "Sofrer dano de recuo",
+      useMove: s => `Usar ${s}`, theMove: "o golpe", agile: " (estilo Ágil)", strong: " (estilo Forte)",
+      happy: n => `Amizade ≥ ${n}`, affection: n => `Afeto ≥ ${n}`, beauty: n => `Beleza ≥ ${n}`,
+      held: s => `segurando ${s}`, knowing: s => `conhecendo ${s}`, knowingType: s => `conhecendo golpe do tipo ${s}`,
+      day: "de dia", night: "de noite", dusk: "ao entardecer", at: s => `em ${s}`,
+      partySpecies: s => `com ${s} na equipe`, partyType: s => `com Pokémon do tipo ${s} na equipe`,
+      atkGt: "Ataque > Defesa", atkLt: "Ataque < Defesa", atkEq: "Ataque = Defesa",
+      femaleOnly: "(apenas fêmeas)", maleOnly: "(apenas machos)", rain: "com chuva",
+      upside: "com o console de cabeça para baixo", steps: n => `após ${n} passos`
+    },
+    en: {
+      search: "Search by name or number…",
+      regionAll: "Region: all", gameAll: "Game: all", gen: "Generation",
+      loadingDex: "Loading Pokédex…", filtering: "Filtering…",
+      filterError: "Could not apply the filter. Try again.",
+      found: n => `${n} Pokémon found`,
+      zero: "0 results",
+      noneTitle: "No Pokémon found", noneText: "Try another name, number or filter.",
+      loadErrTitle: "Could not load the Pokédex", loadErrText: "Check your connection and try again.",
+      retry: "Try again", loadingMore: "Loading…", end: "End of the list 🎉", moreErr: "Loading failed.",
+      close: "Close", prev: "Previous Pokémon", next: "Next Pokémon", shiny: "Toggle shiny version",
+      height: "Height", weight: "Weight", exp: "Base EXP",
+      secEvo: "Evolution", secAbilities: "Abilities", secStats: "Base stats",
+      total: "Total", hidden: "hidden", curiosities: "Trivia",
+      hint: "Swipe sideways (or use ← →) to switch Pokémon",
+      loadingDesc: "Loading description…", loadingEvo: "Loading evolution…", loadingCur: "Loading…",
+      failDesc: "Could not load the description.", failEvo: "Could not load the evolution.",
+      failCur: "Could not load the trivia.",
+      noEvo: "This Pokémon has no evolutions or pre-evolutions.", noEvoData: "No evolution data.",
+      noDesc: "No description available.",
+      translating: "Translating…",
+      trFail: "Could not translate right now; showing the official English text.",
+      descPt: g => `Machine translation of the official English text · Pokémon ${g}`,
+      descNative: g => `Official Pokédex text · Pokémon ${g}`,
+      descEsFallback: g => `Official English text · Pokémon ${g}`,
+      autoNote: "Machine translation of the official English texts.",
+      allEntries: n => `All Pokédex entries (${n})`,
+      rCategory: "Category", rGeneration: "Debut generation", rStatus: "Classification", rHabitat: "Habitat",
+      rColor: "Color (Pokédex)", rEgg: "Egg groups", rGender: "Gender ratio", rCapture: "Catch rate",
+      rHappiness: "Base friendship", rGrowth: "Growth rate", rHatch: "Egg cycles",
+      rEvolvesFrom: "Evolves from", rForms: "Alternate forms", rHeld: "Held items (wild)",
+      rMoves: "Moves it can learn",
+      capture: n => `${n} (out of 255)`, genderless: "Genderless",
+      genderFmt: (m, f) => `${m}% male · ${f}% female`,
+      sBaby: "Baby Pokémon", sLegendary: "Legendary", sMythical: "Mythical",
+      weakTitle: "Weaknesses and resistances (current type chart)",
+      mu4: "Very weak (×4)", mu2: "Weak (×2)", mu05: "Resists (×½)", mu025: "Strongly resists (×¼)", mu0: "Immune (×0)",
+      srcNote: "Official game data, via PokeAPI.",
+      or: " or ", special: "Special condition", levelUp: "Level up", level: n => `Level ${n}`,
+      trade: "Trade", tradeFor: s => `Trade for ${s}`, useItem: s => `Use ${s}`, useItemGeneric: "Use an item",
+      shed: "With an open party slot and a Poké Ball", spin: "Spin around",
+      crits: "Land 3 critical hits in one battle", bisharp: "Defeat 3 leader Bisharp",
+      damage: n => `Take at least ${n} damage`, damageAny: "Take damage",
+      recoil: n => `Take ${n} recoil damage`, recoilAny: "Take recoil damage",
+      useMove: s => `Use ${s}`, theMove: "the move", agile: " (Agile Style)", strong: " (Strong Style)",
+      happy: n => `Friendship ≥ ${n}`, affection: n => `Affection ≥ ${n}`, beauty: n => `Beauty ≥ ${n}`,
+      held: s => `holding ${s}`, knowing: s => `knowing ${s}`, knowingType: s => `knowing a ${s}-type move`,
+      day: "during the day", night: "at night", dusk: "at dusk", at: s => `at ${s}`,
+      partySpecies: s => `with ${s} in the party`, partyType: s => `with a ${s}-type Pokémon in the party`,
+      atkGt: "Attack > Defense", atkLt: "Attack < Defense", atkEq: "Attack = Defense",
+      femaleOnly: "(females only)", maleOnly: "(males only)", rain: "while raining",
+      upside: "with the console turned upside down", steps: n => `after ${n} steps`
+    },
+    es: {
+      search: "Buscar por nombre o número…",
+      regionAll: "Región: todas", gameAll: "Juego: todos", gen: "Generación",
+      loadingDex: "Cargando Pokédex…", filtering: "Filtrando…",
+      filterError: "Error al aplicar el filtro. Inténtalo de nuevo.",
+      found: n => `${n} Pokémon encontrado${n > 1 ? "s" : ""}`,
+      zero: "0 resultados",
+      noneTitle: "No se encontró ningún Pokémon", noneText: "Prueba con otro nombre, número o filtro.",
+      loadErrTitle: "No se pudo cargar la Pokédex", loadErrText: "Revisa tu conexión e inténtalo de nuevo.",
+      retry: "Reintentar", loadingMore: "Cargando…", end: "Fin de la lista 🎉", moreErr: "Error al cargar.",
+      close: "Cerrar", prev: "Pokémon anterior", next: "Siguiente Pokémon", shiny: "Alternar versión shiny",
+      height: "Altura", weight: "Peso", exp: "Exp. base",
+      secEvo: "Evolución", secAbilities: "Habilidades", secStats: "Estadísticas base",
+      total: "Total", hidden: "oculta", curiosities: "Curiosidades",
+      hint: "Desliza hacia los lados (o usa ← →) para cambiar de Pokémon",
+      loadingDesc: "Cargando descripción…", loadingEvo: "Cargando evolución…", loadingCur: "Cargando…",
+      failDesc: "No se pudo cargar la descripción.", failEvo: "No se pudo cargar la evolución.",
+      failCur: "No se pudieron cargar las curiosidades.",
+      noEvo: "Este Pokémon no tiene evoluciones ni preevoluciones.", noEvoData: "Sin datos de evolución.",
+      noDesc: "Sin descripción disponible.",
+      translating: "Traduciendo…",
+      trFail: "No se pudo traducir ahora; se muestra el texto oficial en inglés.",
+      descPt: g => `Traducción automática del texto oficial en inglés · Pokémon ${g}`,
+      descNative: g => `Texto oficial de la Pokédex · Pokémon ${g}`,
+      descEsFallback: g => `Texto oficial en inglés (sin versión en español) · Pokémon ${g}`,
+      autoNote: "Traducción automática de los textos oficiales en inglés.",
+      allEntries: n => `Todas las entradas de la Pokédex (${n})`,
+      rCategory: "Categoría", rGeneration: "Generación de debut", rStatus: "Clasificación", rHabitat: "Hábitat",
+      rColor: "Color (Pokédex)", rEgg: "Grupos huevo", rGender: "Proporción de género", rCapture: "Ratio de captura",
+      rHappiness: "Amistad base", rGrowth: "Velocidad de crecimiento", rHatch: "Ciclos de huevo",
+      rEvolvesFrom: "Evoluciona de", rForms: "Formas alternativas", rHeld: "Objetos equipados (salvaje)",
+      rMoves: "Movimientos que puede aprender",
+      capture: n => `${n} (de 255)`, genderless: "Sin género",
+      genderFmt: (m, f) => `${m} % macho · ${f} % hembra`,
+      sBaby: "Pokémon bebé", sLegendary: "Legendario", sMythical: "Singular",
+      weakTitle: "Debilidades y resistencias (tabla de tipos actual)",
+      mu4: "Muy débil (×4)", mu2: "Débil (×2)", mu05: "Resiste (×½)", mu025: "Resiste mucho (×¼)", mu0: "Inmune (×0)",
+      srcNote: "Datos oficiales de los juegos, obtenidos de PokeAPI.",
+      or: " o ", special: "Condición especial", levelUp: "Subir de nivel", level: n => `Nivel ${n}`,
+      trade: "Intercambio", tradeFor: s => `Intercambio por ${s}`, useItem: s => `Usar ${s}`, useItemGeneric: "Usar un objeto",
+      shed: "Con un hueco en el equipo y una Poké Ball", spin: "Girar",
+      crits: "Asestar 3 golpes críticos en un combate", bisharp: "Derrotar a 3 Bisharp líderes",
+      damage: n => `Recibir al menos ${n} de daño`, damageAny: "Recibir daño",
+      recoil: n => `Recibir ${n} de daño por retroceso`, recoilAny: "Recibir daño por retroceso",
+      useMove: s => `Usar ${s}`, theMove: "el movimiento", agile: " (estilo rápido)", strong: " (estilo fuerte)",
+      happy: n => `Amistad ≥ ${n}`, affection: n => `Afecto ≥ ${n}`, beauty: n => `Belleza ≥ ${n}`,
+      held: s => `con ${s} equipado`, knowing: s => `conociendo ${s}`, knowingType: s => `conociendo un movimiento de tipo ${s}`,
+      day: "de día", night: "de noche", dusk: "al atardecer", at: s => `en ${s}`,
+      partySpecies: s => `con ${s} en el equipo`, partyType: s => `con un Pokémon de tipo ${s} en el equipo`,
+      atkGt: "Ataque > Defensa", atkLt: "Ataque < Defensa", atkEq: "Ataque = Defensa",
+      femaleOnly: "(solo hembras)", maleOnly: "(solo machos)", rain: "con lluvia",
+      upside: "con la consola boca abajo", steps: n => `tras ${n} pasos`
+    }
+  };
+
+  // Dicionários de nomes (cai em nice(slug) quando não houver)
+  const DICT = {
+    type: {
+      pt: { normal: "Normal", fire: "Fogo", water: "Água", electric: "Elétrico", grass: "Planta", ice: "Gelo",
+            fighting: "Lutador", poison: "Veneno", ground: "Terra", flying: "Voador", psychic: "Psíquico",
+            bug: "Inseto", rock: "Pedra", ghost: "Fantasma", dragon: "Dragão", dark: "Sombrio", steel: "Aço", fairy: "Fada" },
+      en: {},
+      es: { normal: "Normal", fire: "Fuego", water: "Agua", electric: "Eléctrico", grass: "Planta", ice: "Hielo",
+            fighting: "Lucha", poison: "Veneno", ground: "Tierra", flying: "Volador", psychic: "Psíquico",
+            bug: "Bicho", rock: "Roca", ghost: "Fantasma", dragon: "Dragón", dark: "Siniestro", steel: "Acero", fairy: "Hada" }
+    },
+    stat: {
+      pt: { "hp": "HP", "attack": "Ataque", "defense": "Defesa", "special-attack": "Atq. Esp.", "special-defense": "Def. Esp.", "speed": "Velocidade" },
+      en: { "hp": "HP", "attack": "Attack", "defense": "Defense", "special-attack": "Sp. Atk", "special-defense": "Sp. Def", "speed": "Speed" },
+      es: { "hp": "PS", "attack": "Ataque", "defense": "Defensa", "special-attack": "At. Esp.", "special-defense": "Def. Esp.", "speed": "Velocidad" }
+    },
+    color: {
+      pt: { black: "Preto", blue: "Azul", brown: "Marrom", gray: "Cinza", green: "Verde", pink: "Rosa", purple: "Roxo", red: "Vermelho", white: "Branco", yellow: "Amarelo" },
+      en: {},
+      es: { black: "Negro", blue: "Azul", brown: "Marrón", gray: "Gris", green: "Verde", pink: "Rosa", purple: "Morado", red: "Rojo", white: "Blanco", yellow: "Amarillo" }
+    },
+    habitat: {
+      pt: { "cave": "Caverna", "forest": "Floresta", "grassland": "Campo", "mountain": "Montanha", "rare": "Raro", "rough-terrain": "Terreno acidentado", "sea": "Mar", "urban": "Urbano", "waters-edge": "Beira d'água" },
+      en: { "waters-edge": "Water's edge", "rough-terrain": "Rough terrain" },
+      es: { "cave": "Cueva", "forest": "Bosque", "grassland": "Pradera", "mountain": "Montaña", "rare": "Raro", "rough-terrain": "Terreno accidentado", "sea": "Mar", "urban": "Urbano", "waters-edge": "Orilla del agua" }
+    },
+    egg: {
+      pt: { "monster": "Monstro", "water1": "Água 1", "water2": "Água 2", "water3": "Água 3", "bug": "Inseto", "flying": "Voador", "ground": "Campo", "fairy": "Fada", "plant": "Planta", "humanshape": "Humanoide", "mineral": "Mineral", "indeterminate": "Amorfo", "ditto": "Ditto", "dragon": "Dragão", "no-eggs": "Desconhecido" },
+      en: { "monster": "Monster", "water1": "Water 1", "water2": "Water 2", "water3": "Water 3", "bug": "Bug", "flying": "Flying", "ground": "Field", "fairy": "Fairy", "plant": "Grass", "humanshape": "Human-Like", "mineral": "Mineral", "indeterminate": "Amorphous", "ditto": "Ditto", "dragon": "Dragon", "no-eggs": "Undiscovered" },
+      es: { "monster": "Monstruo", "water1": "Agua 1", "water2": "Agua 2", "water3": "Agua 3", "bug": "Bicho", "flying": "Volador", "ground": "Campo", "fairy": "Hada", "plant": "Planta", "humanshape": "Humanoide", "mineral": "Mineral", "indeterminate": "Amorfo", "ditto": "Ditto", "dragon": "Dragón", "no-eggs": "Desconocido" }
+    },
+    growth: {
+      pt: { "slow": "Lento", "medium": "Médio-rápido", "fast": "Rápido", "medium-slow": "Médio-lento", "slow-then-very-fast": "Errático", "fast-then-very-slow": "Flutuante" },
+      en: { "slow": "Slow", "medium": "Medium Fast", "fast": "Fast", "medium-slow": "Medium Slow", "slow-then-very-fast": "Erratic", "fast-then-very-slow": "Fluctuating" },
+      es: { "slow": "Lenta", "medium": "Media", "fast": "Rápida", "medium-slow": "Parabólica", "slow-then-very-fast": "Errática", "fast-then-very-slow": "Fluctuante" }
+    },
+    region: {
+      pt: {}, en: {}, es: { unova: "Teselia" }
+    }
+  };
+
+  // Cor de cada tipo (única fonte: cards, chips, pílulas e modal usam estes valores)
+  const TYPE_TINT = {
+    normal: "#d3a273", fire: "#ff7a2f", water: "#3b8bff", electric: "#ffd02e",
+    grass: "#3ecf6a", ice: "#4fd6e6", fighting: "#e5383b", poison: "#b04fd6",
+    ground: "#d9a441", flying: "#7f9cff", psychic: "#ff4f8b", bug: "#9cc926",
+    rock: "#a89c58", ghost: "#7a5bd0", dragon: "#5b3df5", dark: "#5b4b6b",
+    steel: "#8fa3b8", fairy: "#ff8fcf"
+  };
+
+  // Texto branco ou escuro, conforme o contraste com a cor (scale < 1 = cor escurecida do degradê)
+  const INK_DARK = "#1b1740";
+  function inkFor(hex, scale = 1) {
+    const n = parseInt(hex.slice(1), 16);
+    const lin = v => { v = (v * scale) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    const L = 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255);
+    return 1.05 / (L + 0.05) >= 3 ? "#ffffff" : INK_DARK;
+  }
+  const TYPE_INK = {};      // texto sobre a cor cheia (pílulas, chips)
+  const TYPE_INK_CARD = {}; // texto sobre o degradê do card/modal
+  Object.keys(TYPE_TINT).forEach(tp => {
+    TYPE_INK[tp] = inkFor(TYPE_TINT[tp]);
+    TYPE_INK_CARD[tp] = inkFor(TYPE_TINT[tp], 0.76);
+  });
+
+  // Classes .t-<tipo> geradas a partir das cores acima
+  (function () {
+    const st = document.createElement("style");
+    st.textContent = Object.keys(TYPE_TINT)
+      .map(tp => `.t-${tp}{background:${TYPE_TINT[tp]};color:${TYPE_INK[tp]}}`).join("\n");
+    document.head.appendChild(st);
+  })();
+
+  // Regiões = região principal de cada geração (onde o Pokémon estreou)
+  const REGIONS = [["kanto", 1], ["johto", 2], ["hoenn", 3], ["sinnoh", 4], ["unova", 5], ["kalos", 6], ["alola", 7], ["galar", 8], ["paldea", 9]];
+  const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
+
+  // Nomes dos jogos (grupos de versão da PokeAPI)
+  const GAME_LABEL = {
+    "red-blue": "Red / Blue", "yellow": "Yellow", "gold-silver": "Gold / Silver", "crystal": "Crystal",
+    "ruby-sapphire": "Ruby / Sapphire", "emerald": "Emerald", "firered-leafgreen": "FireRed / LeafGreen",
+    "diamond-pearl": "Diamond / Pearl", "platinum": "Platinum", "heartgold-soulsilver": "HeartGold / SoulSilver",
+    "black-white": "Black / White", "black-2-white-2": "Black 2 / White 2",
+    "x-y": "X / Y", "omega-ruby-alpha-sapphire": "Omega Ruby / Alpha Sapphire",
+    "sun-moon": "Sun / Moon", "ultra-sun-ultra-moon": "Ultra Sun / Ultra Moon",
+    "lets-go-pikachu-lets-go-eevee": "Let's Go, Pikachu! / Let's Go, Eevee!",
+    "sword-shield": "Sword / Shield", "the-isle-of-armor": "Sword / Shield: The Isle of Armor",
+    "the-crown-tundra": "Sword / Shield: The Crown Tundra",
+    "brilliant-diamond-and-shining-pearl": "Brilliant Diamond / Shining Pearl", "legends-arceus": "Legends: Arceus",
+    "scarlet-violet": "Scarlet / Violet", "the-teal-mask": "Scarlet / Violet: The Teal Mask",
+    "the-indigo-disk": "Scarlet / Violet: The Indigo Disk", "legends-za": "Legends: Z-A"
+  };
+  const GAME_EXCLUDE = ["colosseum", "xd"]; // sem Pokédex regional
+
+  let lang = (() => { try { return localStorage.getItem("pokedex.lang") || "pt"; } catch (e) { return "pt"; } })();
+  if (!I18N[lang]) lang = "pt";
+
+  // _("chave", ...args): texto no idioma atual
+  const _ = (k, ...a) => {
+    const v = I18N[lang][k] !== undefined ? I18N[lang][k] : I18N.pt[k];
+    return typeof v === "function" ? v(...a) : v;
+  };
+  const dict = (name, key) => (DICT[name][lang] && DICT[name][lang][key]) || nice(key);
+  const typeName = key => dict("type", key);
+  const fmtNum = (n, digits = 1) => {
+    const s = n.toFixed(digits);
+    return lang === "en" ? s : s.replace(".", ",");
+  };
+
+  /* =====================================================================
+     Utilidades
+     ===================================================================== */
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  function nice(s) { return String(s).replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()); }
+  const idFromUrl = u => Number(u.match(/\/(\d+)\/?$/)[1]);
+  const pad = n => String(n).padStart(3, "0");
+  const artUrl = (id, shiny) => `${SPR}/other/official-artwork/${shiny ? "shiny/" : ""}${id}.png`;
+
+  const grid = $("grid"), statusEl = $("status"), searchEl = $("search");
+  const sentinel = $("sentinel"), filtersEl = $("filters");
+  const overlay = $("overlay"), modal = $("modal");
+  const regionEl = $("region"), gameEl = $("game"), langEl = $("lang");
+
+  // Estado
+  let allList = [];            // [{id, name}] todos os Pokémon
+  let filtered = [];           // lista após busca + filtros
+  let shown = 0;               // quantos já foram renderizados
+  let loading = false;
+  let token = 0;               // invalida cargas antigas quando o filtro muda
+  let activeType = null;
+  let regionGen = null;        // geração (região) selecionada
+  let gameSlug = null;         // jogo selecionado
+  let gameList = [];           // slugs dos jogos
+  let query = "";
+  let statusKind = "loading";
+  let currentId = null;        // Pokémon aberto no modal
+  let modalToken = 0;          // invalida cargas antigas do modal
+  let shiny = false;           // modo shiny do modal
+
+  const detailCache = new Map();   // id -> dados do Pokémon
+  const byId = new Map();          // id -> dados já carregados (para o modal)
+  const typeCache = new Map();     // tipo -> { ids, rel }
+  const speciesCache = new Map();  // nome da espécie -> dados
+  const chainCache = new Map();    // url da cadeia -> dados
+  const regionCache = new Map();   // geração -> Set de ids
+  const gameCache = new Map();     // jogo -> Set de ids
+
+  async function getJSON(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res.json();
+  }
+
+  /* =====================================================================
+     Tradução automática (só para a descrição em português)
+     A PokeAPI não tem textos da Pokédex em português: o texto oficial em
+     inglês é traduzido por serviços gratuitos e guardado em cache local.
+     ===================================================================== */
+  const TR_KEY = "pokedex.tr.pt.v1";
+  let trMem = {};
+  try { trMem = JSON.parse(localStorage.getItem(TR_KEY) || "{}"); } catch (e) { trMem = {}; }
+  const trInflight = new Map();
+
+  function trSave() {
+    try {
+      if (Object.keys(trMem).length > 600) trMem = {};
+      localStorage.setItem(TR_KEY, JSON.stringify(trMem));
+    } catch (e) { /* sem armazenamento: segue sem cache */ }
+  }
+
+  async function viaGoogle(text) {
+    const url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=pt&dt=t&q=" + encodeURIComponent(text);
+    const r = await fetch(url);
+    if (!r.ok) throw new Error("google " + r.status);
+    const d = await r.json();
+    const out = d[0].map(s => s[0]).join("").trim();
+    if (!out) throw new Error("google vazio");
+    return out;
+  }
+
+  async function viaMyMemory(text) {
+    const url = "https://api.mymemory.translated.net/get?langpair=en|pt-br&q=" + encodeURIComponent(text);
+    const r = await fetch(url);
+    if (!r.ok) throw new Error("mymemory " + r.status);
+    const d = await r.json();
+    const out = d.responseData && d.responseData.translatedText;
+    if (!out || Number(d.responseStatus) !== 200 || /MYMEMORY WARNING/i.test(out)) throw new Error("mymemory recusou");
+    return out.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").trim();
+  }
+
+  function translate(text) {
+    if (trMem[text]) return Promise.resolve(trMem[text]);
+    if (trInflight.has(text)) return trInflight.get(text);
+    const p = (async () => {
+      let out = null;
+      try { out = await viaGoogle(text); } catch (e) { /* tenta o próximo */ }
+      if (!out) { try { out = await viaMyMemory(text); } catch (e) { /* sem tradução */ } }
+      if (out) { trMem[text] = out; trSave(); }
+      trInflight.delete(text);
+      return out;
+    })();
+    trInflight.set(text, p);
+    return p;
+  }
+
+  /* =====================================================================
+     Inicialização
+     ===================================================================== */
+  async function init() {
+    showSkeletons(12);
+    setStatus("loading");
+    loadGames(); // em segundo plano
+    try {
+      const data = await getJSON(`${API}/pokemon?limit=100000`);
+      allList = data.results
+        .map(r => ({ id: idFromUrl(r.url), name: r.name }))
+        .filter(p => p.id < MAX_ID)
+        .sort((a, b) => a.id - b.id);
+      applyFilters();
+    } catch (err) {
+      console.error(err);
+      grid.innerHTML = `
+        <div class="message">
+          <strong>${esc(_("loadErrTitle"))}</strong>
+          ${esc(_("loadErrText"))}
+          <br><button class="btn" id="retry">${esc(_("retry"))}</button>
+        </div>`;
+      statusEl.textContent = "";
+      $("retry").onclick = init;
+    }
+  }
+
+  function setStatus(kind) {
+    statusKind = kind;
+    statusEl.textContent =
+      kind === "loading" ? _("loadingDex") :
+      kind === "filtering" ? _("filtering") :
+      kind === "error" ? _("filterError") :
+      kind === "none" ? _("zero") :
+      _("found", filtered.length);
+  }
+
+  /* =====================================================================
+     Idioma da página
+     ===================================================================== */
+  function setLang(l) {
+    if (l === lang || !I18N[l]) return;
+    lang = l;
+    try { localStorage.setItem("pokedex.lang", l); } catch (e) { /* ignora */ }
+    applyLang();
+  }
+
+  function applyLang() {
+    document.documentElement.lang = { pt: "pt-BR", en: "en", es: "es" }[lang];
+    searchEl.placeholder = _("search");
+    langEl.querySelectorAll("button").forEach(b => {
+      const on = b.dataset.lang === lang;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    renderChips();
+    buildSelects();
+    if (allList.length) rerenderGrid();
+    else if (statusKind === "loading") setStatus("loading");
+    if (overlay.classList.contains("open") && byId.has(currentId)) {
+      const st = modal.scrollTop;
+      const myToken = ++modalToken;
+      const p = byId.get(currentId);
+      renderModal(p, 0);
+      loadExtras(p, myToken);
+      modal.scrollTop = st;
+    }
+  }
+
+  /* =====================================================================
+     Filtros: tipo, região, jogo, busca
+     ===================================================================== */
+  function renderChips() {
+    const chips = [`<button class="chip all${activeType ? "" : " active"}" data-type="" aria-pressed="${!activeType}">${esc(lang === "en" ? "All" : "Todos")}</button>`]
+      .concat(Object.keys(TYPE_TINT).map(tp => {
+        const on = tp === activeType;
+        const style = on ? ` style="background:${TYPE_TINT[tp]};color:${TYPE_INK[tp]}"` : "";
+        return `<button class="chip${on ? " active" : ""}" data-type="${tp}" aria-pressed="${on}"${style}><i class="dot" style="background:${TYPE_TINT[tp]}"></i>${esc(typeName(tp))}</button>`;
+      }));
+    filtersEl.innerHTML = chips.join("");
+  }
+
+  function regionLabel(name, gen) {
+    return `${(DICT.region[lang] && DICT.region[lang][name]) || nice(name)} · ${_("gen")} ${ROMAN[gen]}`;
+  }
+
+  function buildSelects() {
+    regionEl.innerHTML = `<option value="">${esc(_("regionAll"))}</option>` +
+      REGIONS.map(([n, g]) => `<option value="${g}">${esc(regionLabel(n, g))}</option>`).join("");
+    regionEl.value = regionGen ? String(regionGen) : "";
+    regionEl.setAttribute("aria-label", _("regionAll"));
+
+    gameEl.innerHTML = `<option value="">${esc(_("gameAll"))}</option>` +
+      gameList.map(s => `<option value="${s}">${esc(GAME_LABEL[s] || nice(s))}</option>`).join("");
+    gameEl.value = gameSlug || "";
+    gameEl.disabled = !gameList.length;
+    gameEl.setAttribute("aria-label", _("gameAll"));
+  }
+
+  async function loadGames() {
+    let slugs = [];
+    try {
+      const data = await getJSON(`${API}/version-group?limit=100`);
+      slugs = data.results.map(r => r.name);
+    } catch (err) {
+      console.error(err);
+    }
+    if (!slugs.length) slugs = Object.keys(GAME_LABEL); // lista fixa se a API falhar
+    gameList = slugs.filter(s => !GAME_EXCLUDE.includes(s));
+    buildSelects();
+  }
+
+  // Dados de um tipo: Pokémon que o têm + relações de dano
+  async function getType(type) {
+    if (typeCache.has(type)) return typeCache.get(type);
+    const data = await getJSON(`${API}/type/${type}`);
+    const entry = {
+      ids: new Set(data.pokemon.map(p => idFromUrl(p.pokemon.url))),
+      rel: data.damage_relations
+    };
+    typeCache.set(type, entry);
+    return entry;
+  }
+
+  // Pokémon que estrearam na geração (região) indicada
+  async function getRegionIds(gen) {
+    if (regionCache.has(gen)) return regionCache.get(gen);
+    const data = await getJSON(`${API}/generation/${gen}`);
+    const ids = new Set(data.pokemon_species.map(s => idFromUrl(s.url)));
+    regionCache.set(gen, ids);
+    return ids;
+  }
+
+  // Pokémon presentes na(s) Pokédex(es) regional(is) do jogo
+  async function getGameIds(slug) {
+    if (gameCache.has(slug)) return gameCache.get(slug);
+    const vg = await getJSON(`${API}/version-group/${slug}`);
+    const dexes = await Promise.all(vg.pokedexes.map(p => getJSON(p.url)));
+    const ids = new Set();
+    dexes.forEach(d => d.pokemon_entries.forEach(e => ids.add(idFromUrl(e.pokemon_species.url))));
+    gameCache.set(slug, ids);
+    return ids;
+  }
+
+  async function applyFilters() {
+    const myToken = ++token;
+    const sets = [];
+    if (activeType || regionGen || gameSlug) setStatus("filtering");
+    try {
+      if (activeType) sets.push((await getType(activeType)).ids);
+      if (regionGen) sets.push(await getRegionIds(regionGen));
+      if (gameSlug) sets.push(await getGameIds(gameSlug));
+    } catch (err) {
+      console.error(err);
+      if (myToken === token) setStatus("error");
+      return;
+    }
+    if (myToken !== token) return;
+
+    const q = query.trim().toLowerCase().replace(/^#/, "");
+    filtered = allList.filter(p => {
+      if (!sets.every(s => s.has(p.id))) return false;
+      if (!q) return true;
+      return p.name.includes(q) || String(p.id) === q || pad(p.id).startsWith(q);
+    });
+
+    grid.innerHTML = "";
+    shown = 0;
+    loading = false;
+
+    if (!filtered.length) {
+      showNone();
+      return;
+    }
+
+    setStatus("found");
+    loadMore();
+  }
+
+  function showNone() {
+    grid.innerHTML = `
+      <div class="message">
+        <strong>${esc(_("noneTitle"))}</strong>
+        ${esc(_("noneText"))}
+      </div>`;
+    sentinel.innerHTML = "";
+    setStatus("none");
+  }
+
+  // Redesenha o que já foi carregado (ex.: ao trocar de idioma)
+  function rerenderGrid() {
+    grid.innerHTML = "";
+    if (!filtered.length) {
+      if (allList.length && statusKind !== "loading") showNone();
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    filtered.slice(0, shown).forEach((p, i) => {
+      const d = detailCache.get(p.id);
+      if (d) frag.appendChild(makeCard(d, i % 12));
+    });
+    grid.appendChild(frag);
+    if (statusKind === "found" || statusKind === "none") setStatus("found");
+    else setStatus(statusKind);
+    sentinel.innerHTML = shown >= filtered.length ? esc(_("end")) : "";
+  }
+
+  /* =====================================================================
+     Carregamento paginado
+     ===================================================================== */
+  async function fetchDetail(p) {
+    if (detailCache.has(p.id)) return detailCache.get(p.id);
+    const d = await getJSON(`${API}/pokemon/${p.id}`);
+    const art = d.sprites.other["official-artwork"];
+    const data = {
+      id: d.id,
+      name: d.name,
+      speciesName: d.species.name,
+      image: art.front_default || d.sprites.front_default || "",
+      shinyImage: art.front_shiny || d.sprites.front_shiny || "",
+      types: d.types.map(t => t.type.name),
+      height: d.height / 10,
+      weight: d.weight / 10,
+      exp: d.base_experience,
+      abilities: d.abilities.map(a => ({ name: a.ability.name.replace(/-/g, " "), hidden: a.is_hidden })),
+      stats: d.stats.map(s => ({ name: s.stat.name, value: s.base_stat })),
+      held: d.held_items.map(h => nice(h.item.name)),
+      movesCount: d.moves.length
+    };
+    detailCache.set(p.id, data);
+    byId.set(p.id, data);
+    return data;
+  }
+
+  function showSkeletons(n) {
+    grid.innerHTML = Array.from({ length: n }, () => '<div class="skeleton"></div>').join("");
+  }
+
+  async function loadMore() {
+    if (loading || shown >= filtered.length) {
+      if (shown >= filtered.length && filtered.length) sentinel.innerHTML = "";
+      return;
+    }
+    loading = true;
+    const myToken = token;
+    sentinel.innerHTML = `<div class="spinner"></div> ${esc(_("loadingMore"))}`;
+
+    const slice = filtered.slice(shown, shown + PAGE_SIZE);
+    try {
+      const items = await Promise.all(slice.map(fetchDetail));
+      if (myToken !== token) return;
+      const frag = document.createDocumentFragment();
+      items.forEach((p, i) => frag.appendChild(makeCard(p, i)));
+      grid.appendChild(frag);
+      shown += slice.length;
+      loading = false;
+      sentinel.innerHTML = shown >= filtered.length ? esc(_("end")) : "";
+      // se o sentinela ainda estiver visível, dispara de novo
+      observer.unobserve(sentinel);
+      observer.observe(sentinel);
+    } catch (err) {
+      console.error(err);
+      if (myToken !== token) return;
+      loading = false;
+      sentinel.innerHTML = `${esc(_("moreErr"))} <button class="btn" style="margin:0 0 0 10px" id="retryMore">${esc(_("retry"))}</button>`;
+      $("retryMore").onclick = loadMore;
+    }
+  }
+
+  function makeCard(p, i) {
+    const el = document.createElement("button");
+    el.className = "card";
+    el.type = "button";
+    el.style.setProperty("--c", TYPE_TINT[p.types[0]]);
+    el.style.setProperty("--on", TYPE_INK_CARD[p.types[0]]);
+    el.style.animationDelay = (i * 20) + "ms";
+    el.innerHTML = `
+      <span class="number">#${pad(p.id)}</span>
+      <img src="${p.image}" alt="${esc(p.name)}" loading="lazy">
+      <h2>${esc(p.name)}</h2>
+      <div class="types">
+        ${p.types.map(tp => `<span class="type t-${tp}">${esc(typeName(tp))}</span>`).join("")}
+      </div>`;
+    el.addEventListener("click", () => openModal(p.id));
+    return el;
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) loadMore();
+  }, { rootMargin: "400px" });
+  observer.observe(sentinel);
+
+  /* =====================================================================
+     Espécie, cadeia de evolução e tipos
+     ===================================================================== */
+  function cleanFlavors(list, language) {
+    return list
+      .filter(f => f.language.name === language)
+      .map(f => ({
+        text: f.flavor_text.replace(/­\n?/g, "").replace(/[\n\f]/g, " ").replace(/\s+/g, " ").trim(),
+        version: f.version.name,
+        vid: idFromUrl(f.version.url)
+      }))
+      .sort((a, b) => a.vid - b.vid);
+  }
+
+  async function fetchSpecies(name) {
+    if (speciesCache.has(name)) return speciesCache.get(name);
+    const s = await getJSON(`${API}/pokemon-species/${name}`);
+    const genusEn = s.genera.find(g => g.language.name === "en");
+    const data = {
+      flavors: { en: cleanFlavors(s.flavor_text_entries, "en"), es: cleanFlavors(s.flavor_text_entries, "es") },
+      genus: genusEn ? genusEn.genus : null,
+      generation: s.generation ? s.generation.name : null,
+      habitat: s.habitat ? s.habitat.name : null,
+      color: s.color ? s.color.name : null,
+      eggGroups: s.egg_groups.map(e => e.name),
+      genderRate: s.gender_rate,
+      capture: s.capture_rate,
+      happiness: s.base_happiness,
+      growth: s.growth_rate ? s.growth_rate.name : null,
+      hatch: s.hatch_counter,
+      baby: s.is_baby,
+      legendary: s.is_legendary,
+      mythical: s.is_mythical,
+      evolvesFrom: s.evolves_from_species ? s.evolves_from_species.name : null,
+      varieties: s.varieties.filter(v => !v.is_default).map(v => v.pokemon.name),
+      chainUrl: s.evolution_chain ? s.evolution_chain.url : null
+    };
+    speciesCache.set(name, data);
+    return data;
+  }
+
+  async function fetchChain(url) {
+    if (chainCache.has(url)) return chainCache.get(url);
+    const c = await getJSON(url);
+    chainCache.set(url, c);
+    return c;
+  }
+
+  // Multiplicador de dano recebido, por tipo atacante
+  async function matchups(types) {
+    const mult = {};
+    Object.keys(TYPE_TINT).forEach(tp => { mult[tp] = 1; });
+    const rels = await Promise.all(types.map(getType));
+    rels.forEach(({ rel }) => {
+      rel.double_damage_from.forEach(x => { if (x.name in mult) mult[x.name] *= 2; });
+      rel.half_damage_from.forEach(x => { if (x.name in mult) mult[x.name] *= 0.5; });
+      rel.no_damage_from.forEach(x => { if (x.name in mult) mult[x.name] *= 0; });
+    });
+    return mult;
+  }
+
+  /* =====================================================================
+     Evolução
+     ===================================================================== */
+  const MOVE_TRIGGERS = ["use-move", "agile-style-move", "strong-style-move"];
+
+  function evoCond(list) {
+    const out = [];
+    (list || []).forEach(d => {
+      const trig = d.trigger ? d.trigger.name : "";
+      const b = [];
+      const item = d.item ? nice(d.item.name) : null;
+
+      if (trig === "level-up" && !d.min_level) b.push(_("levelUp"));
+      if (d.min_level) b.push(_("level", d.min_level));
+
+      if (trig === "trade") b.push(d.trade_species ? _("tradeFor", nice(d.trade_species.name)) : _("trade"));
+      else if (trig === "use-item") b.push(item ? _("useItem", item) : _("useItemGeneric"));
+      else if (trig === "shed") b.push(_("shed"));
+      else if (trig === "spin") b.push(_("spin"));
+      else if (trig === "three-critical-hits") b.push(_("crits"));
+      else if (trig === "three-defeated-bisharp") b.push(_("bisharp"));
+      else if (trig === "take-damage") b.push(d.min_damage_taken ? _("damage", d.min_damage_taken) : _("damageAny"));
+      else if (trig === "recoil-damage") b.push(d.min_damage_taken ? _("recoil", d.min_damage_taken) : _("recoilAny"));
+      else if (MOVE_TRIGGERS.includes(trig)) {
+        const style = trig === "agile-style-move" ? _("agile") : trig === "strong-style-move" ? _("strong") : "";
+        const mv = d.known_move ? nice(d.known_move.name) : _("theMove");
+        b.push(_("useMove", mv) + style + (d.min_move_count ? ` ${d.min_move_count}×` : ""));
+      }
+      else if (trig === "other") { /* sem texto próprio: cai em "condição especial" se não houver outros detalhes */ }
+      else if (trig && trig !== "level-up") b.push(item ? _("useItem", item) : nice(trig));
+
+      if (d.min_happiness) b.push(_("happy", d.min_happiness));
+      if (d.min_affection) b.push(_("affection", d.min_affection));
+      if (d.min_beauty) b.push(_("beauty", d.min_beauty));
+      if (d.held_item) b.push(_("held", nice(d.held_item.name)));
+      if (d.known_move && !MOVE_TRIGGERS.includes(trig)) b.push(_("knowing", nice(d.known_move.name)));
+      if (d.known_move_type) b.push(_("knowingType", typeName(d.known_move_type.name)));
+      if (d.time_of_day) b.push(_(d.time_of_day) || d.time_of_day);
+      if (d.location) b.push(_("at", nice(d.location.name)));
+      if (d.party_species) b.push(_("partySpecies", nice(d.party_species.name)));
+      if (d.party_type) b.push(_("partyType", typeName(d.party_type.name)));
+      if (d.relative_physical_stats === 1) b.push(_("atkGt"));
+      else if (d.relative_physical_stats === -1) b.push(_("atkLt"));
+      else if (d.relative_physical_stats === 0) b.push(_("atkEq"));
+      if (d.gender) b.push(d.gender === 1 ? _("femaleOnly") : _("maleOnly"));
+      if (d.needs_overworld_rain) b.push(_("rain"));
+      if (d.turn_upside_down) b.push(_("upside"));
+      if (d.min_steps) b.push(_("steps", d.min_steps));
+
+      out.push(b.length ? b.join(", ") : _("special"));
+    });
+    const uniq = [...new Set(out)];
+    return uniq.length ? uniq.join(_("or")) : _("special");
+  }
+
+  function evoNode(node, curName) {
+    const id = idFromUrl(node.species.url);
+    const mon = `
+      <button class="evo-mon${node.species.name === curName ? " current" : ""}" data-id="${id}" type="button">
+        <img src="${artUrl(id, shiny)}" alt="${esc(node.species.name)}" loading="lazy"
+             onerror="this.onerror=null;this.src='${SPR}/${id}.png'">
+        <span>${esc(nice(node.species.name))}</span>
+      </button>`;
+    if (!node.evolves_to.length) return `<div class="evo-stage">${mon}</div>`;
+    const kids = node.evolves_to.map(ch => `
+      <div class="evo-kid">
+        <div class="evo-cond">${esc(evoCond(ch.evolution_details))}</div>
+        <div class="evo-arrow">↓</div>
+        ${evoNode(ch, curName)}
+      </div>`).join("");
+    return `<div class="evo-stage">${mon}<div class="evo-kids">${kids}</div></div>`;
+  }
+
+  function evoHTML(chain, p) {
+    const root = chain.chain;
+    const tree = `<div class="evo-tree">${evoNode(root, p.speciesName)}</div>`;
+    if (!root.evolves_to.length) return tree + `<p class="ph">${esc(_("noEvo"))}</p>`;
+    return tree;
+  }
+
+  /* =====================================================================
+     Descrição e curiosidades
+     ===================================================================== */
+  // Qual lista de textos usar em cada idioma
+  function flavorSource(sp) {
+    if (lang === "es" && sp.flavors.es.length) return { list: sp.flavors.es, native: true };
+    return { list: sp.flavors.en, native: lang === "en" };
+  }
+
+  function groupFlavors(list) {
+    const groups = [];
+    list.forEach(f => {
+      const g = groups.find(x => x.text === f.text);
+      if (g) g.versions.push(nice(f.version));
+      else groups.push({ text: f.text, versions: [nice(f.version)] });
+    });
+    return groups;
+  }
+
+  function descHTML(sp) {
+    const { list, native } = flavorSource(sp);
+    if (!list.length) return `<p class="ph">${esc(_("noDesc"))}</p>`;
+    const last = list[list.length - 1];
+    const groups = groupFlavors(list);
+    const game = nice(last.version);
+
+    let note;
+    if (lang === "pt") note = _("translating");
+    else if (native) note = _("descNative", game);
+    else note = _("descEsFallback", game);
+
+    return `
+      <p class="desc" id="m-dtext">${esc(last.text)}</p>
+      <p class="desc-src" id="m-dsrc">${esc(note)}</p>
+      <details class="fold" id="m-all">
+        <summary>${esc(_("allEntries", groups.length))}</summary>
+        <div class="fold-body">
+          ${lang === "pt" ? `<p class="desc-src">${esc(_("autoNote"))}</p>` : ""}
+          ${groups.map(g => `<div class="entry"><p>${esc(g.text)}</p><small>${esc(g.versions.join(", "))}</small></div>`).join("")}
+        </div>
+      </details>`;
+  }
+
+  // Em português: traduz o texto principal já e as demais entradas ao abrir a aba
+  function setupTranslation(sp, myToken) {
+    if (lang !== "pt") return;
+    const list = sp.flavors.en;
+    if (!list.length) return;
+    const last = list[list.length - 1];
+    const main = $("m-dtext"), note = $("m-dsrc"), all = $("m-all");
+
+    translate(last.text).then(txt => {
+      if (myToken !== modalToken) return;
+      if (txt) {
+        main.textContent = txt;
+        main.lang = "pt-BR";
+        note.textContent = _("descPt", nice(last.version));
+      } else {
+        note.textContent = _("trFail");
+      }
+    });
+
+    all.addEventListener("toggle", () => {
+      if (!all.open || all.dataset.done) return;
+      all.dataset.done = "1";
+      translateEntries(all, myToken);
+    });
+  }
+
+  async function translateEntries(all, myToken) {
+    const ps = Array.from(all.querySelectorAll(".entry p"));
+    for (let i = 0; i < ps.length; i += 3) {
+      await Promise.all(ps.slice(i, i + 3).map(async p => {
+        const txt = await translate(p.textContent);
+        if (myToken === modalToken && txt) { p.textContent = txt; p.lang = "pt-BR"; }
+      }));
+      if (myToken !== modalToken) return;
+    }
+  }
+
+  function matchHTML(mu) {
+    const groups = [["mu4", 4], ["mu2", 2], ["mu05", 0.5], ["mu025", 0.25], ["mu0", 0]];
+    return groups.map(([key, v]) => {
+      const ts = Object.keys(mu).filter(tp => mu[tp] === v);
+      if (!ts.length) return "";
+      return `<div class="mu"><span>${esc(_(key))}</span><div class="types">${ts.map(tp => `<span class="type t-${tp}">${esc(typeName(tp))}</span>`).join("")}</div></div>`;
+    }).join("");
+  }
+
+  function curiosHTML(p, sp, mu) {
+    const rows = [];
+    const row = (k, v) => {
+      if (v === null || v === undefined || v === "" || v === false) return;
+      rows.push(`<div class="curio"><span>${esc(_(k))}</span><b>${v}</b></div>`);
+    };
+
+    const status = [sp.baby && _("sBaby"), sp.legendary && _("sLegendary"), sp.mythical && _("sMythical")].filter(Boolean).join(", ");
+    let gender = null;
+    if (sp.genderRate === -1) gender = _("genderless");
+    else if (typeof sp.genderRate === "number") {
+      const f = sp.genderRate / 8 * 100;
+      const fmt = n => fmtNum(n).replace(/[.,]0$/, "");
+      gender = _("genderFmt", fmt(100 - f), fmt(f));
+    }
+
+    row("rCategory", sp.genus ? esc(sp.genus) : null);
+    row("rGeneration", sp.generation ? `${esc(_("gen"))} ${esc(sp.generation.split("-")[1].toUpperCase())}` : null);
+    row("rStatus", status ? esc(status) : null);
+    row("rHabitat", sp.habitat ? esc(dict("habitat", sp.habitat)) : null);
+    row("rColor", sp.color ? esc(dict("color", sp.color)) : null);
+    row("rEgg", sp.eggGroups.length ? esc(sp.eggGroups.map(e => dict("egg", e)).join(", ")) : null);
+    row("rGender", gender ? esc(gender) : null);
+    row("rCapture", typeof sp.capture === "number" ? esc(_("capture", sp.capture)) : null);
+    row("rHappiness", typeof sp.happiness === "number" ? sp.happiness : null);
+    row("rGrowth", sp.growth ? esc(dict("growth", sp.growth)) : null);
+    row("rHatch", typeof sp.hatch === "number" ? sp.hatch : null);
+    row("rEvolvesFrom", sp.evolvesFrom ? esc(nice(sp.evolvesFrom)) : null);
+    row("rForms", sp.varieties.length ? esc(sp.varieties.map(nice).join(", ")) : null);
+    row("rHeld", p.held.length ? esc(p.held.join(", ")) : null);
+    row("rMoves", p.movesCount || null);
+
+    return `
+      ${rows.join("")}
+      <div class="curio" style="display:block"><span>${esc(_("weakTitle"))}</span></div>
+      ${matchHTML(mu)}
+      <p class="src-note">${esc(_("srcNote"))}</p>`;
+  }
+
+  /* =====================================================================
+     Modal de detalhes
+     ===================================================================== */
+  function statColor(v) {
+    if (v < 50) return "#f34444";
+    if (v < 80) return "#ff9f43";
+    if (v < 110) return "#f7d02c";
+    if (v < 140) return "#7ac74c";
+    return "#23cd5e";
+  }
+
+  // lista usada para passar para o lado (respeita busca/filtros quando possível)
+  function navList() {
+    return filtered.some(p => p.id === currentId) ? filtered : allList;
+  }
+
+  async function openModal(id, dir = 0) {
+    const myToken = ++modalToken;
+    let p = byId.get(id);
+    if (!p) {
+      try { p = await fetchDetail({ id }); }
+      catch (err) { console.error(err); return; }
+      if (myToken !== modalToken) return;
+    }
+    currentId = id;
+    renderModal(p, dir);
+    loadExtras(p, myToken);
+  }
+
+  function renderModal(p, dir) {
+    const wasOpen = overlay.classList.contains("open");
+    const list = navList();
+    const idx = list.findIndex(x => x.id === p.id);
+    const hasPrev = idx > 0;
+    const hasNext = idx >= 0 && idx < list.length - 1;
+    const total = p.stats.reduce((s, x) => s + x.value, 0);
+    const showShiny = shiny && !!p.shinyImage;
+
+    modal.style.setProperty("--c", TYPE_TINT[p.types[0]]);
+    modal.style.setProperty("--on", TYPE_INK_CARD[p.types[0]]);
+    modal.innerHTML = `
+      <div class="mc ${dir > 0 ? "from-right" : dir < 0 ? "from-left" : ""}">
+        <div class="modal-hero">
+          <span class="modal-num">#${pad(p.id)}</span>
+          <button class="modal-close" data-act="close" aria-label="${esc(_("close"))}" type="button">×</button>
+          <button class="nav-btn prev" data-act="prev" aria-label="${esc(_("prev"))}" type="button" ${hasPrev ? "" : "disabled"}>‹</button>
+          <img id="m-img" src="${showShiny ? p.shinyImage : p.image}" alt="${esc(p.name)}">
+          <button class="nav-btn next" data-act="next" aria-label="${esc(_("next"))}" type="button" ${hasNext ? "" : "disabled"}>›</button>
+          <button class="shiny-btn${showShiny ? " on" : ""}" data-act="shiny" aria-label="${esc(_("shiny"))}" aria-pressed="${showShiny}" type="button" ${p.shinyImage ? "" : "disabled"}>✨</button>
+        </div>
+        <div class="modal-body">
+          <h2>${esc(p.name)}</h2>
+          <div class="types">
+            ${p.types.map(tp => `<span class="type t-${tp}">${esc(typeName(tp))}</span>`).join("")}
+          </div>
+
+          <div class="block" id="m-desc"><p class="ph">${esc(_("loadingDesc"))}</p></div>
+
+          <div class="facts">
+            <div class="fact"><span>${esc(_("height"))}</span><b>${fmtNum(p.height)} m</b></div>
+            <div class="fact"><span>${esc(_("weight"))}</span><b>${fmtNum(p.weight)} kg</b></div>
+            <div class="fact"><span>${esc(_("exp"))}</span><b>${p.exp ?? "—"}</b></div>
+          </div>
+
+          <h3>${esc(_("secEvo"))}</h3>
+          <div class="block" id="m-evo"><p class="ph">${esc(_("loadingEvo"))}</p></div>
+
+          <h3>${esc(_("secAbilities"))}</h3>
+          <div class="abilities">
+            ${p.abilities.map(a => `<span class="ability">${esc(a.name)}${a.hidden ? ` <small>(${esc(_("hidden"))})</small>` : ""}</span>`).join("")}
+          </div>
+
+          <div class="stats-block">
+            <h3>${esc(_("secStats"))}</h3>
+            ${p.stats.map(s => `
+              <div class="stat">
+                <span>${esc(dict("stat", s.name))}</span>
+                <b>${s.value}</b>
+                <div class="bar"><i data-w="${Math.min(100, s.value / 255 * 100)}" style="background:${statColor(s.value)}"></i></div>
+              </div>`).join("")}
+            <div class="stat">
+              <span><b>${esc(_("total"))}</b></span><b>${total}</b><div></div>
+            </div>
+          </div>
+
+          <details class="fold">
+            <summary>🔍 ${esc(_("curiosities"))}</summary>
+            <div class="fold-body" id="m-cur"><p class="ph">${esc(_("loadingCur"))}</p></div>
+          </details>
+
+          <p class="hint">${esc(_("hint"))}</p>
+        </div>
+      </div>`;
+
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+    document.body.classList.add("locked");
+    modal.scrollTop = 0;
+    if (!wasOpen) { const c = modal.querySelector(".modal-close"); if (c) c.focus(); }
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      modal.querySelectorAll(".bar i").forEach(b => { b.style.width = b.dataset.w + "%"; });
+    }));
+  }
+
+  // Carrega descrição, evolução e curiosidades (cada parte falha de forma independente)
+  function loadExtras(p, myToken) {
+    const alive = () => myToken === modalToken && overlay.classList.contains("open");
+    const fail = (id, key) => { if (alive()) { const el = $(id); if (el) el.innerHTML = `<p class="ph">${esc(_(key))}</p>`; } };
+
+    const spP = fetchSpecies(p.speciesName);
+
+    spP.then(sp => {
+         if (!alive()) return;
+         $("m-desc").innerHTML = descHTML(sp);
+         setupTranslation(sp, myToken);
+       })
+       .catch(err => { console.error(err); fail("m-desc", "failDesc"); });
+
+    spP.then(sp => (sp.chainUrl ? fetchChain(sp.chainUrl) : null))
+       .then(chain => {
+         if (!alive()) return;
+         $("m-evo").innerHTML = chain ? evoHTML(chain, p) : `<p class="ph">${esc(_("noEvoData"))}</p>`;
+       })
+       .catch(err => { console.error(err); fail("m-evo", "failEvo"); });
+
+    Promise.all([spP, matchups(p.types)])
+       .then(([sp, mu]) => { if (alive()) $("m-cur").innerHTML = curiosHTML(p, sp, mu); })
+       .catch(err => { console.error(err); fail("m-cur", "failCur"); });
+  }
+
+  function navigate(delta) {
+    const list = navList();
+    const i = list.findIndex(x => x.id === currentId);
+    const j = i + delta;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    openModal(list[j].id, delta);
+  }
+
+  function toggleShiny() {
+    const p = byId.get(currentId);
+    if (!p || !p.shinyImage) return;
+    shiny = !shiny;
+    $("m-img").src = shiny ? p.shinyImage : p.image;
+    const btn = modal.querySelector('[data-act="shiny"]');
+    btn.classList.toggle("on", shiny);
+    btn.setAttribute("aria-pressed", shiny ? "true" : "false");
+    modal.querySelectorAll(".evo-mon img").forEach(im => {
+      const id = im.closest(".evo-mon").dataset.id;
+      im.src = artUrl(id, shiny);
+    });
+  }
+
+  function closeModal() {
+    modalToken++;
+    shiny = false;
+    overlay.classList.remove("open");
+    overlay.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("locked");
+  }
+
+  /* =====================================================================
+     Eventos
+     ===================================================================== */
+  modal.addEventListener("click", e => {
+    const a = e.target.closest("[data-act]");
+    if (a && !a.disabled) {
+      const act = a.dataset.act;
+      if (act === "close") closeModal();
+      else if (act === "prev") navigate(-1);
+      else if (act === "next") navigate(1);
+      else if (act === "shiny") toggleShiny();
+      return;
+    }
+    const evo = e.target.closest(".evo-mon");
+    if (evo) {
+      const id = Number(evo.dataset.id);
+      if (id !== currentId) openModal(id, id > currentId ? 1 : -1);
+    }
+  });
+
+  overlay.addEventListener("click", e => { if (e.target === overlay) closeModal(); });
+
+  document.addEventListener("keydown", e => {
+    if (!overlay.classList.contains("open")) return;
+    if (e.key === "Escape") closeModal();
+    else if (e.key === "ArrowLeft") navigate(-1);
+    else if (e.key === "ArrowRight") navigate(1);
+  });
+
+  // Deslizar para os lados (toque)
+  let tx = 0, ty = 0, tracking = false;
+  modal.addEventListener("touchstart", e => {
+    const t0 = e.touches[0];
+    tx = t0.clientX; ty = t0.clientY; tracking = true;
+  }, { passive: true });
+  modal.addEventListener("touchend", e => {
+    if (!tracking) return;
+    tracking = false;
+    const t0 = e.changedTouches[0];
+    const dx = t0.clientX - tx, dy = t0.clientY - ty;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) navigate(dx < 0 ? 1 : -1);
+  }, { passive: true });
+
+  // Idioma
+  langEl.addEventListener("click", e => {
+    const b = e.target.closest("button[data-lang]");
+    if (b) setLang(b.dataset.lang);
+  });
+
+  // Filtro por tipo
+  filtersEl.addEventListener("click", e => {
+    const chip = e.target.closest(".chip");
+    if (!chip) return;
+    const type = chip.dataset.type || null;
+    if (type === activeType) return;
+    activeType = type;
+    renderChips();
+    applyFilters();
+  });
+
+  // Filtros de região e jogo
+  regionEl.addEventListener("change", () => {
+    regionGen = regionEl.value ? Number(regionEl.value) : null;
+    applyFilters();
+  });
+  gameEl.addEventListener("change", () => {
+    gameSlug = gameEl.value || null;
+    applyFilters();
+  });
+
+  // Busca (com debounce)
+  let debounce;
+  searchEl.addEventListener("input", () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => {
+      query = searchEl.value;
+      applyFilters();
+    }, 250);
+  });
+
+  applyLang();
+  init();
+</script>
+</body>
+</html>
